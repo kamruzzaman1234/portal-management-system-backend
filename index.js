@@ -27,6 +27,7 @@ async function run() {
     await client.connect();
     const studentsUsers = client.db('students_info').collection('user')
 
+      // User Register
     app.post('/students_signup', async(req,res)=>{
          try {
             const newUser = req.body;
@@ -55,7 +56,53 @@ async function run() {
         
     })
 
+// 
+app.post('/students_signin', async (req, res) => {
+  try {
+    const { email, password, student_id } = req.body;
 
+    // input validation
+    if (!email || !password || !student_id) {
+      return res.status(400).json({ message: "Email, password and student_id not match" });
+    }
+
+    // check user exists
+    const user = await studentsUsers.findOne({ email: email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // check password
+    const isPasswordMatch = bcrypt.compareSync(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    // check student_id
+    if (user.student_id !== student_id) {
+      return res.status(401).json({ message: "Invalid student ID" });
+    }
+
+    // success message 
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        full_name: user.full_name,
+        email: user.email,
+        student_id: user.student_id,
+        department: user.department,
+        type: user.type,
+      }
+    });
+
+  } catch (error) {
+    console.error("Signin Error:", error.message);
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message
+    });
+  }
+});
 
     
     await client.db("admin").command({ ping: 1 });
