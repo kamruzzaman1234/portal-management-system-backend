@@ -5,10 +5,11 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const bcrypt = require("bcrypt");
+const { ObjectId } = require("mongodb");
 const PORT = process.env.PORT || 6060
 
 app.use(express.json())
-app.use(cors())
+app.use(cors({ origin: 'http://localhost:3000' }));
 
 const uri = `mongodb+srv://${process.env.PORTAL_DB_NAME}:${process.env.PORTAL_DB_PASS}@cluster0.7olulz0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -25,10 +26,11 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const studentsUsers = client.db('students_info').collection('user')
+    const studentsUsers = client.db('students_info').collection('user');
+    const courseCollection = client.db('students_info').collection('course')
 
       // User Register
-    app.post('/students_signup', async(req,res)=>{
+  app.post('/students_signup', async(req,res)=>{
          try {
             const newUser = req.body;
             console.log("Incoming Data:", newUser);
@@ -54,55 +56,130 @@ async function run() {
   }
         
         
-    })
+  })
 
-// 
-app.post('/students_signin', async (req, res) => {
+    // GET all students
+app.get('/students_signup', async (req, res) => {
   try {
-    const { email, password, student_id } = req.body;
-
-    // input validation
-    if (!email || !password || !student_id) {
-      return res.status(400).json({ message: "Email, password and student_id not match" });
-    }
-
-    // check user exists
-    const user = await studentsUsers.findOne({ email: email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // check password
-    const isPasswordMatch = bcrypt.compareSync(password, user.password);
-    if (!isPasswordMatch) {
-      return res.status(401).json({ message: "Invalid password" });
-    }
-
-    // check student_id
-    if (user.student_id !== student_id) {
-      return res.status(401).json({ message: "Invalid student ID" });
-    }
-
-    // success message 
-    res.status(200).json({
-      message: "Login successful",
-      user: {
-        full_name: user.full_name,
-        email: user.email,
-        student_id: user.student_id,
-        department: user.department,
-        type: user.type,
+    // projection দিয়ে শুধু প্রয়োজনীয় ফিল্ড দেখানো
+    const students = await studentsUsers.find({}, {
+      projection: {
+        full_name: 1,
+      student_id: 1,
+      email: 1,
+      profile_url: 1,
+      gender: 1,
+      date_of_birth: 1,
+      phone: 1,
+      address: 1,
+      department:1,
+      joining_date:1,
+      qualification:1,
+      type:1,
+      date:1,
+      nationality:1,
+      religion:1,
+      father_name:1,
+      mother_name:1,
       }
-    });
+    }).toArray();
 
+    res.status(200).json(students);
   } catch (error) {
-    console.error("Signin Error:", error.message);
-    res.status(500).json({
-      message: "Something went wrong",
-      error: error.message
-    });
+    console.error("Error fetching students:", error.message);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 });
+
+app.get('/students_signup/:id', async (req, res) => {
+  const id = req.params.id;
+
+  // Validate ObjectId
+  let query;
+  try {
+    query = { _id: new ObjectId(id) };
+  } catch (error) {
+    console.error("Invalid ObjectId format:", error.message);
+    return res.status(400).send({ error: "Invalid ID format" });
+  }
+
+  const options = {
+    projection: {
+      full_name: 1,
+      student_id: 1,
+      email: 1,
+      profile_url: 1,
+      gender: 1,
+      date_of_birth: 1,
+      phone: 1,
+      address: 1,
+      department:1,
+      joining_date:1,
+      qualification:1,
+      type:1,
+      date:1,
+      nationality:1,
+      religion:1,
+      father_name:1,
+      mother_name:1,
+      
+    }
+  };
+
+  try {
+    const student = await studentsUsers.findOne(query, options);
+
+    if (!student) {
+      console.log("No document found with the provided ID.");
+      return res.status(404).send({ message: "Student not found" });
+    }
+
+    res.status(200).json(student);
+  } catch (error) {
+    console.error("Database query error:", error.message);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
+// Course Fetch 
+
+app.get('/department', async(req,res)=>{
+  try{
+    const department = await courseCollection.find().toArray()
+    res.status(200).json(department)
+  }catch(error){
+    res.status(500).json({message: 'Failed to fetch department', error})
+  }
+})
+
+
+// app.get('/students/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     // MongoDB ObjectId validation
+//     const ObjectId = require('mongodb').ObjectId;
+//     if (!ObjectId.isValid(id)) {
+//       return res.status(400).json({ message: "Invalid ID format" });
+//     }
+
+//     const student = await studentsUsers.findOne(
+//       { _id: new ObjectId(id) },
+//       { projection: { student_id: 1 } } // শুধুমাত্র student_id দেখাবে
+//     );
+
+//     if (!student) return res.status(404).json({ message: "Student not found" });
+
+//     res.status(200).json(student);
+//   } catch (error) {
+//     console.error("Error fetching student:", error.message);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+
+
+
 
     
     await client.db("admin").command({ ping: 1 });
