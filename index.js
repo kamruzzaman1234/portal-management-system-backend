@@ -86,12 +86,12 @@ async function run() {
 
     // 🔹 Root Route ✅
     app.get("/", (req, res) => {
-      res.send("Hello World ✅ Server is running successfully!");
+      res.send("Hello World Server is running successfully!");
     });
 
-    // ✅ Start server after MongoDB connection
+    // Start server after MongoDB connection
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(` Server is running on port ${PORT}`);
     });
 
   } catch (error) {
