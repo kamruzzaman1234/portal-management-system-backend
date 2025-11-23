@@ -41,6 +41,22 @@ async function run() {
     // ---------------------------
     // 🔹 User Signup API
     // ---------------------------
+    app.get('/students_singup', async(req,res)=>{
+        const students = studentsUsers.find()
+        const result = await students.toArray();
+        res.send(result)
+    })
+
+    // specific id
+
+    app.get('/students/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = studentsUsers.deleteOne(query);
+      res.send(result);
+    })
+
+
     app.post("/students_signup", async (req, res) => {
       try {
         const newUser = req.body;
@@ -56,6 +72,7 @@ async function run() {
         res.status(500).json({ message: "Something went wrong", error: error.message });
       }
     });
+
 
     // 🔹 Teacher Signup API
     app.post("/teacher", async (req, res) => {
