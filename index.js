@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "http://localhost:3000", 
-    "https://your-frontend-domain.com"  // Production domain allow করো
+    "https://portal-management-system-frontend-git-main-kmruzzamans-projects.vercel.app"  
   ],
   credentials: true,
 }));
