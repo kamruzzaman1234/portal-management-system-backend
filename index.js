@@ -47,6 +47,21 @@ async function run() {
         res.send(result)
     })
 
+
+   app.delete('/students_signup/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+
+        const result = await studentsUsers.deleteOne(query); // FIXED: added await
+
+        res.send({ success: true, result });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ success: false, message: "Delete failed" });
+    }
+});
+
     // specific id
 
     app.get('/students/:id', async(req,res)=>{
@@ -55,6 +70,8 @@ async function run() {
       const result = studentsUsers.deleteOne(query);
       res.send(result);
     })
+
+    
 
 
     app.post("/students_signup", async (req, res) => {
